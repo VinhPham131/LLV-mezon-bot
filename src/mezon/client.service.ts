@@ -1,10 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { MezonClient } from 'mezon-sdk';
 import { MezonClientConfig } from './types/config';
-import {
-  ReactMessageChannel,
-  ReplyMezonMessage,
-} from './types/message';
+import { ReactMessageChannel, ReplyMezonMessage } from './types/message';
 
 @Injectable()
 export class MezonClientService {

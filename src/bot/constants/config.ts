@@ -11,7 +11,6 @@ export const MEZON_EMBED_FOOTER = {
   icon_url: MEZON_IMAGE_URL,
 };
 
-
 export enum EMessageMode {
   CHANNEL_MESSAGE = 2,
   DM_MESSAGE = 4,
@@ -51,7 +50,6 @@ export interface EmbedProps {
   timestamp?: string;
   footer?: { text: string; icon_url?: string };
 }
-
 
 export enum EmbeddedButtonType {
   CONFIRM = 'CONFIRM',

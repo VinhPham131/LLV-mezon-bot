@@ -1,3 +1,1 @@
-export class ApiUrl {
-
-}
+export class ApiUrl {}
