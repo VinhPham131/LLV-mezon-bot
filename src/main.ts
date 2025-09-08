@@ -11,7 +11,7 @@ async function bootstrap() {
     origin: '*',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
   });
-  
+
   const bot = app.get(BotGateway);
   bot.initEvent();
 
