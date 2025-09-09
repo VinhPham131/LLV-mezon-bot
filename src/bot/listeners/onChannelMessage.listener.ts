@@ -1,6 +1,6 @@
 import { OnEvent } from '@nestjs/event-emitter';
 import { ChannelMessage, Events } from 'mezon-sdk';
-import { CommandBase } from '../bot/base/command.handle';
+import { CommandBase } from '../base/command.handle';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()

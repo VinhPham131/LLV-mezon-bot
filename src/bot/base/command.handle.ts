@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { CommandStorage } from '../base/storage';
 import { CommandMessage } from './command.abstract';
-import { extractMessage } from '../../utils/helps';
+import { extractMessage } from '../utils/helps';
 import { CommandBaseInterface } from './interfaces/asterisk.interface';
 
 @Injectable()

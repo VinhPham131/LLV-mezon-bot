@@ -71,3 +71,12 @@ export enum TransferType {
   REGULAR = 'regular',
   API = 'api',
 }
+
+export enum FuncType {
+  RUT = 'rut',
+  SLOTS = 'slots',
+  LIXI = 'lixi',
+  SICBO = 'sicbo',
+  TRANSACTION = 'transaction',
+  ALL = 'all'
+}
