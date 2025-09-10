@@ -7,6 +7,7 @@ import { CommandBase } from './base/command.handle';
 import { ListenerChannelMessage } from './listeners/onChannelMessage.listener';
 import { HelpsCommand } from 'src/bot/commands/helps/helps.command';
 import { RutCommand } from './commands/casino/rut.command';
+import { LuatchoiCommand } from './commands/luatchoi/luatchoi.command';
 import { User } from './models/user.entity';
 import { BlockRut } from './models/blockrut.entity';
 import { UserCacheService } from './services/user-cache.service';
@@ -27,6 +28,7 @@ import { ListenerTokenSend } from './listeners/tokensend.handle';
     ListenerChannelMessage,
     HelpsCommand,
     RutCommand,
+    LuatchoiCommand,
     UserCacheService,
     RedisCacheService,
     ExtendersService,
