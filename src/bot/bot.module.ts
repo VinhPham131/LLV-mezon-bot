@@ -14,6 +14,7 @@ import { RedisCacheService } from './services/redis-cache.service';
 import { ExtendersService } from './services/extenders.services';
 import { KTTKCommand } from './commands/casino/kttk.command';
 import { ListenerTokenSend } from './listeners/tokensend.handle';
+import { LuatChoiCommand } from './commands/luatchoi/luatchoi.command';
 
 @Module({
   imports: [
@@ -31,7 +32,9 @@ import { ListenerTokenSend } from './listeners/tokensend.handle';
     RedisCacheService,
     ExtendersService,
     KTTKCommand,
-    ListenerTokenSend
+    ListenerTokenSend,
+    LuatChoiCommand
+
   ],
   controllers: [],
 })
