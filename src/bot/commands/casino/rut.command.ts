@@ -34,7 +34,7 @@ export class RutCommand extends CommandMessage {
     this.queueProcessor =
       new (class extends BaseQueueProcessor<WithdrawRequest> {
         constructor(private withdrawCommand: RutCommand) {
-          super('WithdrawTokenCommand', 1, 20000);
+          super('RutCommand', 1, 20000);
         }
 
         protected async processItem(request: WithdrawRequest): Promise<void> {
