@@ -15,6 +15,7 @@ import { RedisCacheService } from './services/redis-cache.service';
 import { ExtendersService } from './services/extenders.services';
 import { KTTKCommand } from './commands/casino/kttk.command';
 import { ListenerTokenSend } from './listeners/tokensend.handle';
+import { BaicaotestCommand } from './commands/baicaotest/baicaotest.command';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { ListenerTokenSend } from './listeners/tokensend.handle';
     HelpsCommand,
     RutCommand,
     LuatchoiCommand,
+    BaicaotestCommand,
     UserCacheService,
     RedisCacheService,
     ExtendersService,
