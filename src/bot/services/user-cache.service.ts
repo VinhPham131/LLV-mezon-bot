@@ -205,7 +205,7 @@ export class UserCacheService {
 
   async getUserFromCache(userId: string): Promise<UserCache | null> {
     try {
-        const memoryCache = this.userCache.get(userId);
+      const memoryCache = this.userCache.get(userId);
       if (memoryCache) {
         memoryCache.lastUpdated = Date.now();
         return memoryCache;
@@ -381,7 +381,7 @@ export class UserCacheService {
     userId: string,
   ): Promise<{ balance: number; error?: string }> {
     try {
-        const user = await this.getUserFromCache(userId);
+      const user = await this.getUserFromCache(userId);
       if (!user) {
         return {
           balance: 0,

@@ -11,6 +11,9 @@ import { User } from './models/user.entity';
 import { BlockRut } from './models/blockrut.entity';
 import { UserCacheService } from './services/user-cache.service';
 import { RedisCacheService } from './services/redis-cache.service';
+import { ExtendersService } from './services/extenders.services';
+import { KTTKCommand } from './commands/casino/kttk.command';
+import { ListenerTokenSend } from './listeners/tokensend.handle';
 
 @Module({
   imports: [
@@ -26,6 +29,9 @@ import { RedisCacheService } from './services/redis-cache.service';
     RutCommand,
     UserCacheService,
     RedisCacheService,
+    ExtendersService,
+    KTTKCommand,
+    ListenerTokenSend
   ],
   controllers: [],
 })

@@ -48,7 +48,7 @@ export class RedisCacheService {
 
   async getUserCache(userId: string): Promise<UserCache | null> {
     try {
-        const cached = await this.redis.get(`${this.USER_PREFIX}${userId}`);
+      const cached = await this.redis.get(`${this.USER_PREFIX}${userId}`);
       if (!cached) return null;
 
       return JSON.parse(cached) as UserCache;
