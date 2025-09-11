@@ -15,11 +15,15 @@ import { ExtendersService } from './services/extenders.services';
 import { KTTKCommand } from './commands/casino/kttk.command';
 import { ListenerTokenSend } from './listeners/tokensend.handle';
 import { LuatChoiCommand } from './commands/luatchoi/luatchoi.command';
+import { MezonBotMessage } from './models/mezonBotMeassage.entity';
+import { BaicaoService } from './commands/casino/baicao.service';
+import { ListenerMessageButtonClicked } from './listeners/onMessageButtonClicked.listener';
+
 
 @Module({
   imports: [
     DiscoveryModule,
-    TypeOrmModule.forFeature([User, BlockRut]),
+    TypeOrmModule.forFeature([User, BlockRut, MezonBotMessage]),
   ],
   providers: [
     BotGateway,
@@ -33,7 +37,9 @@ import { LuatChoiCommand } from './commands/luatchoi/luatchoi.command';
     ExtendersService,
     KTTKCommand,
     ListenerTokenSend,
-    LuatChoiCommand
+    LuatChoiCommand,
+    BaicaoService,
+    ListenerMessageButtonClicked
 
   ],
   controllers: [],

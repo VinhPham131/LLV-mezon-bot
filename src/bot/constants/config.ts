@@ -60,6 +60,8 @@ export enum EmbeddedButtonType {
   REPORT = 'REPORT',
   APPROVE = 'APPROVE',
   REJECT = 'REJECT',
+  SUBMITCREATE = 'SUBMITCREATE',
+  CHIABAI = 'CHIABAI',
 }
 
 export enum UserType {
