@@ -22,8 +22,8 @@ export class RedisCacheService {
   private readonly logger = new Logger(RedisCacheService.name);
   private redis: Redis;
 
-  private readonly USER_PREFIX = 'user:slots:';
-  private readonly LOCK_PREFIX = 'lock:slots:';
+  private readonly USER_PREFIX = 'user:baicao:';
+  private readonly LOCK_PREFIX = 'lock:baicao:';
 
   private readonly USER_TTL = 86400; // 1 day
   private readonly LOCK_TTL = 10;

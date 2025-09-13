@@ -6,8 +6,6 @@ import { EUserError } from 'src/bot/constants/error';
 import { CommandMessage } from 'src/bot/base/command.abstract';
 import { User } from 'src/bot/models/user.entity';
 import { MezonClientService } from 'src/mezon/client.service';
-import { BlockRut } from 'src/bot/models/blockrut.entity';
-import { FuncType } from 'src/bot/constants/config';
 import { UserCacheService } from 'src/bot/services/user-cache.service';
 import { BaseQueueProcessor } from 'src/bot/base/queue-processor.base';
 
@@ -24,8 +22,6 @@ export class RutCommand extends CommandMessage {
     clientService: MezonClientService,
     @InjectRepository(User)
     private userRepository: Repository<User>,
-    @InjectRepository(BlockRut)
-    private BlockRutRepository: Repository<BlockRut>,
     private dataSource: DataSource,
     private userCacheService: UserCacheService,
   ) {
@@ -80,48 +76,6 @@ export class RutCommand extends CommandMessage {
               type: EMarkdownType.PRE,
               s: 0,
               e: EUserError.INVALID_AMOUNT.length,
-            },
-          ],
-        });
-      }
-
-      const blockrut = await this.BlockRutRepository.findOne({
-        where: { id: 1 },
-      });
-      if (blockrut && blockrut.block === true) {
-        const blockMessage =
-          'Rút tiền hiện đang bị tạm khóa. Vui lòng thử lại sau.';
-        return await messageChannel?.reply({
-          t: blockMessage,
-          mk: [
-            {
-              type: EMarkdownType.PRE,
-              s: 0,
-              e: blockMessage.length,
-            },
-          ],
-        });
-      }
-
-      const banStatus = await this.userCacheService.getUserBanStatus(
-        message.sender_id as string,
-        FuncType.RUT,
-      );
-
-      if (banStatus.isBanned && banStatus.banInfo) {
-        const unbanDate = new Date(banStatus.banInfo.unBanTime * 1000);
-        const formattedTime = unbanDate.toLocaleString('vi-VN', {
-          timeZone: 'Asia/Ho_Chi_Minh',
-          hour12: false,
-        });
-        const msgText = `❌ Bạn đang bị cấm thực hiện hành động "rut" đến ${formattedTime}\n   - Lý do: ${banStatus.banInfo.note}\n NOTE: Hãy liên hệ admin để mua vé unban`;
-        return await messageChannel?.reply({
-          t: msgText,
-          mk: [
-            {
-              type: EMarkdownType.PRE,
-              s: 0,
-              e: msgText.length,
             },
           ],
         });
@@ -226,7 +180,7 @@ export class RutCommand extends CommandMessage {
       };
       await this.client.sendToken(dataSendToken);
 
-      const successMessage = `💸Rút ${money.toLocaleString('vi-VN')} token thành công`;
+      const successMessage = `💰 Rút ${money.toLocaleString('vi-VN')} token thành công`;
       await messageChannel?.reply({
         t: successMessage,
         mk: [{ type: EMarkdownType.PRE, s: 0, e: successMessage.length }],

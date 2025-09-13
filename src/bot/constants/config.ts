@@ -60,6 +60,8 @@ export enum EmbeddedButtonType {
   REPORT = 'REPORT',
   APPROVE = 'APPROVE',
   REJECT = 'REJECT',
+  SUBMITCREATE = 'SUBMITCREATE',
+  CHIABAI = 'CHIABAI',
 }
 
 export enum UserType {
@@ -72,11 +74,3 @@ export enum TransferType {
   API = 'api',
 }
 
-export enum FuncType {
-  RUT = 'rut',
-  SLOTS = 'slots',
-  LIXI = 'lixi',
-  SICBO = 'sicbo',
-  TRANSACTION = 'transaction',
-  ALL = 'all'
-}

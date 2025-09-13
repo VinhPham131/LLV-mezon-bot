@@ -38,7 +38,7 @@ export class KTTKCommand extends CommandMessage {
                 });
             }
 
-            const successMessage = `💸Số dư của bạn là ${Math.floor(result.balance).toLocaleString('vi-VN')}đ`;
+            const successMessage = `💰 Số dư của bạn là ${Math.floor(result.balance).toLocaleString('vi-VN')}đ`;
 
             return await messageChannel?.reply({
                 t: successMessage,

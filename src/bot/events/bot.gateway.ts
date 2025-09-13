@@ -25,7 +25,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../models/user.entity';
 import { MessageButtonClicked } from 'mezon-sdk/dist/cjs/rtapi/realtime';
-import { BOT_ID } from '../constants/config';
 
 @Injectable()
 export class BotGateway {

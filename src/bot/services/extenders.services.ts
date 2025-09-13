@@ -28,7 +28,7 @@ export class ExtendersService {
     ) {
         const botId = process.env.BOT_ID;
         if (user.user_id === botId) return;
-        if (user.user_id === '1767478432163172999') return; // ignored anonymous user
+        if (user.user_id === '1767478432163172999') return;
 
         const cachedUser = await this.userCacheService.getUserFromCache(
             user.user_id,
@@ -47,12 +47,8 @@ export class ExtendersService {
             clan_nick: user.clan_nick ?? '',
             last_message_id: user.message_id,
             last_message_time: Date.now(),
-            scores_quiz: 0,
             deactive: false,
-            botPing: false,
             createdAt: Date.now(),
-            whitelist: invitor ? { [clan_id]: [invitor] } : {},
-            invitor: invitor ? { [clan_id]: invitor } : {},
         };
 
         await this.userRepository.insert(komuUser);

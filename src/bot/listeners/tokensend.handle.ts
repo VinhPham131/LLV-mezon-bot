@@ -73,6 +73,7 @@ export class ListenerTokenSend extends BaseQueueProcessor<TokenSentEvent> {
                 0,
                 10,
             );
+            
 
             if (!balanceResult.success) {
                 throw new Error(
@@ -105,7 +106,7 @@ export class ListenerTokenSend extends BaseQueueProcessor<TokenSentEvent> {
 
             const clan = this.client.clans.get('0');
             const user = await clan?.users.fetch(tokenEvent.sender_id as string);
-            const successMessage = `💸Nạp ${tokenEvent.amount.toLocaleString('vi-VN')} token thành công`;
+            const successMessage = `💰 Nạp ${tokenEvent.amount.toLocaleString('vi-VN')} token thành công`;
             await user?.sendDM({
                 t: successMessage,
                 mk: [{ type: EMarkdownType.PRE, s: 0, e: successMessage.length }],
