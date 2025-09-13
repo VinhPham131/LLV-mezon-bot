@@ -367,6 +367,171 @@ export class BaicaoService {
     if (room.players.length === room.maxPlayers) {
       room.started = true;
       // TODO: Xử lý chia bài
+      // 1. Tạo bộ bài 52 lá
+      const suits = ['♠', '♣', '♦', '♥'];
+      const ranks = [
+        'A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'
+      ];
+      const deck: string[] = [];
+      for (const suit of suits) {
+        for (const rank of ranks) {
+          deck.push(`${rank}${suit}`);
+        }
+      }
+
+      // 2. Xáo bài
+      for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+      }
+
+      // 3. Chia bài cho từng người chơi
+      room.players.forEach((player, idx) => {
+        player.cards = deck.slice(idx * 3, idx * 3 + 3);
+      });
+
+      // 4. Tính điểm và xác định người thắng
+      function getCardValue(card: string): number {
+        const rank = card.replace(/[♠♣♦♥]/g, '');
+        if (rank === 'A') return 1;
+        if (rank === 'J' || rank === 'Q' || rank === 'K') return 10;
+        return Number(rank);
+      }
+
+      function getHandInfo(cards: string[]) {
+        const ranksOnly = cards.map(c => c.replace(/[♠♣♦♥]/g, ''));
+        const suitsOnly = cards.map(c => c.slice(-1));
+        const isTripleThree = ranksOnly.every(r => r === '3');
+        const isTriple = ranksOnly[0] === ranksOnly[1] && ranksOnly[1] === ranksOnly[2] && !isTripleThree;
+        const isThreeFace = ranksOnly.every(r => ['J', 'Q', 'K'].includes(r));
+        const isThreeFacePair = isThreeFace && ranksOnly[0] === ranksOnly[1] && ranksOnly[1] === ranksOnly[2];
+        // Nút đôi: có 2 lá giống nhau
+        const nutPairs = ranksOnly.filter((r, i, arr) => arr.indexOf(r) !== i);
+        const isNutPair = nutPairs.length === 2;
+        const total = cards.reduce((sum, c) => sum + getCardValue(c), 0);
+        const nut = total % 10;
+        // Lá lớn nhất
+        const cardOrder = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+        const suitOrder = ['♠', '♣', '♦', '♥'];
+        const maxCard = cards.sort((a, b) => {
+          const [rankA, suitA] = [a.replace(/[♠♣♦♥]/g, ''), a.slice(-1)];
+          const [rankB, suitB] = [b.replace(/[♠♣♦♥]/g, ''), b.slice(-1)];
+          if (cardOrder.indexOf(rankA) !== cardOrder.indexOf(rankB)) {
+            return cardOrder.indexOf(rankB) - cardOrder.indexOf(rankA);
+          }
+          return suitOrder.indexOf(suitB) - suitOrder.indexOf(suitA);
+        })[0];
+        return {
+          isTripleThree,
+          isTriple,
+          isThreeFacePair,
+          isThreeFace,
+          isNutPair,
+          nut,
+          maxCard,
+          cards,
+          ranksOnly,
+          suitsOnly,
+        };
+      }
+
+      // Tính điểm cho từng người
+      const playerInfos = room.players.map(player => ({
+        ...player,
+        hand: getHandInfo(player.cards),
+      }));
+
+      // So sánh để tìm người thắng
+      playerInfos.sort((a, b) => {
+        // 1. Cào 333
+        if (a.hand.isTripleThree && !b.hand.isTripleThree) return -1;
+        if (!a.hand.isTripleThree && b.hand.isTripleThree) return 1;
+        // 2. 3 lá giống nhau (trừ 333)
+        if (a.hand.isTriple && !b.hand.isTriple) return -1;
+        if (!a.hand.isTriple && b.hand.isTriple) return 1;
+        // Nếu cùng 3 lá giống nhau thì so chất cây lớn nhất
+        if (a.hand.isTriple && b.hand.isTriple) {
+          const suitOrder = ['♠', '♣', '♦', '♥'];
+          const suitA = a.hand.suitsOnly[0];
+          const suitB = b.hand.suitsOnly[0];
+          return suitOrder.indexOf(suitB) - suitOrder.indexOf(suitA);
+        }
+        // 3. 3 tiên đôi
+        if (a.hand.isThreeFacePair && !b.hand.isThreeFacePair) return -1;
+        if (!a.hand.isThreeFacePair && b.hand.isThreeFacePair) return 1;
+        // 4. 3 tiên thường
+        if (a.hand.isThreeFace && !b.hand.isThreeFace) return -1;
+        if (!a.hand.isThreeFace && b.hand.isThreeFace) return 1;
+        // 5. So nút đôi
+        if (a.hand.isNutPair && !b.hand.isNutPair) return -1;
+        if (!a.hand.isNutPair && b.hand.isNutPair) return 1;
+        if (a.hand.isNutPair && b.hand.isNutPair) {
+          // Nếu cùng nút đôi thì so cây lớn nhất
+          const cardOrder = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+          const suitOrder = ['♠', '♣', '♦', '♥'];
+          const [rankA, suitA] = [a.hand.maxCard.replace(/[♠♣♦♥]/g, ''), a.hand.maxCard.slice(-1)];
+          const [rankB, suitB] = [b.hand.maxCard.replace(/[♠♣♦♥]/g, ''), b.hand.maxCard.slice(-1)];
+          if (cardOrder.indexOf(rankA) !== cardOrder.indexOf(rankB)) {
+            return cardOrder.indexOf(rankB) - cardOrder.indexOf(rankA);
+          }
+          return suitOrder.indexOf(suitB) - suitOrder.indexOf(suitA);
+        }
+        // 6. So nút thường
+        if (a.hand.nut !== b.hand.nut) return b.hand.nut - a.hand.nut;
+        // Nếu cùng nút thì so cây lớn nhất
+        const cardOrder = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+        const suitOrder = ['♠', '♣', '♦', '♥'];
+        const [rankA, suitA] = [a.hand.maxCard.replace(/[♠♣♦♥]/g, ''), a.hand.maxCard.slice(-1)];
+        const [rankB, suitB] = [b.hand.maxCard.replace(/[♠♣♦♥]/g, ''), b.hand.maxCard.slice(-1)];
+        if (cardOrder.indexOf(rankA) !== cardOrder.indexOf(rankB)) {
+          return cardOrder.indexOf(rankB) - cardOrder.indexOf(rankA);
+        }
+        return suitOrder.indexOf(suitB) - suitOrder.indexOf(suitA);
+      });
+
+      // Người thắng là playerInfos[0]
+      const winner = playerInfos[0];
+
+      // Lưu kết quả vào room
+      room.players = playerInfos;
+      room.winner = winner.user_id;
+
+      // Cập nhật DB
+      await this.mezonBotMessageRepository.update(
+        { id: message.id },
+        { baicaoRoom: room },
+      );
+
+      // Gửi thông báo kết quả
+      let resultMsg = `🎉 Kết quả bài cào:\n`;
+      playerInfos.forEach((p, idx) => {
+        resultMsg += `${idx === 0 ? '🏆' : ''}${p.username}: ${p.cards.join(', ')} | `;
+        if (p.hand.isTripleThree) resultMsg += 'Cào 333';
+        else if (p.hand.isThreeFacePair) resultMsg += '3 tiên đôi';
+        else if (p.hand.isThreeFace) resultMsg += '3 tiên thường';
+        else if (p.hand.isTriple) resultMsg += '3 lá giống nhau';
+        else resultMsg += `Nút: ${p.hand.nut}`;
+        resultMsg += '\n';
+      });
+      resultMsg += `\nNgười thắng: ${winner.username} nhận ${room.amount * room.players.length}đ`;
+
+      await this.updateBaicaoMessage(data, room);
+
+      const channel = await this.client.channels.fetch(data.channel_id);
+      const msg = await channel.messages.fetch(data.message_id);
+
+      await msg.reply({
+        t: resultMsg,
+        mk: [{ type: EMarkdownType.PRE, s: 0, e: resultMsg.length }],
+      });
+
+      // Trả thưởng cho người thắng
+      // await this.userCacheService.updateUserBalance(
+      //   winner.user_id,
+      //   room.amount * room.players.length,
+      //   0,
+      //   10,
+      // );
     }
 
     await this.mezonBotMessageRepository.update(
