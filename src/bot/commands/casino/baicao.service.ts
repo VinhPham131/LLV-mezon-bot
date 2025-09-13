@@ -9,30 +9,24 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
 import { User } from 'src/bot/models/user.entity';
-import { EmbeddedButtonType, FuncType } from 'src/bot/constants/config';
+import { EmbeddedButtonType } from 'src/bot/constants/config';
 import { MezonBotMessage } from 'src/bot/models/mezonBotMeassage.entity';
 import { MezonClientService } from 'src/mezon/client.service';
-import { EUserError } from 'src/bot/constants/error';
 import { UserCacheService } from 'src/bot/services/user-cache.service';
-
-interface LixiDetail {
-  user_id?: string;
-  username: string;
-  amount: number;
-}
+import { MAX_BET, MAX_PLAYERS, MIN_BET } from 'src/bot/constants/constants';
 
 @Injectable()
 export class BaicaoService {
   private client: MezonClient;
-  private lixiCanceled: Map<string, boolean> = new Map();
+  private baicaoCanceled: Map<string, boolean> = new Map();
 
-  private lixiClickQueue: Map<
+  private baicaoClickQueue: Map<
     string,
     { user_id: string; username: string; timestamp: number }[]
   > = new Map();
-  private lixiProcessingTimeouts: Map<string, NodeJS.Timeout> = new Map();
-  private lixiCompleted: Map<string, boolean> = new Map();
-  private lixiProcessing: Map<string, boolean> = new Map();
+  private baicaoProcessingTimeouts: Map<string, NodeJS.Timeout> = new Map();
+  private baicaoCompleted: Map<string, boolean> = new Map();
+  private baicaoProcessing: Map<string, boolean> = new Map();
 
   constructor(
     @InjectRepository(MezonBotMessage)
@@ -44,12 +38,12 @@ export class BaicaoService {
     this.client = this.clientService.getClient();
   }
 
-  generateButtonComponents(data, lixis?) {
+  generateButtonComponents(data, baicao?) {
     return [
       {
         components: [
           {
-            id: `baicao_CANCEL_${data.sender_id}_${data.clan_id}_${data.mode}_${data.is_public}_${data?.color}_${data.clan_nick || data.username}_${lixis.amount}_${lixis.numPlayer}`,
+            id: `baicao_CANCEL_${data.sender_id}_${data.clan_id}_${data.mode}_${data.is_public}_${data?.color}_${data.clan_nick || data.username}_${baicao.numPlayer}`,
             type: EMessageComponentType.BUTTON,
             component: {
               label: `Cancel`,
@@ -57,7 +51,7 @@ export class BaicaoService {
             },
           },
           {
-            id: `bicao_BATDAU_${data.sender_id}_${data.clan_id}_${data.mode}_${data.is_public}_${data?.color}_${data.clan_nick || data.username}_${lixis.amount}_${lixis.numPlayer}`,
+            id: `baicao_CHIABAI_${data.sender_id}_${data.clan_id}_${data.mode}_${data.is_public}_${data?.color}_${data.clan_nick || data.username}_${baicao.numPlayer}`,
             type: EMessageComponentType.BUTTON,
             component: {
               label: `Chia Bài`,
@@ -74,8 +68,6 @@ export class BaicaoService {
     authId,
     msgId,
     clanId,
-    mode,
-    isPublic,
     color,
     authorName,
   ) {
@@ -83,8 +75,6 @@ export class BaicaoService {
       return;
     }
 
-    console.log('handleSubmitCreate data', data);
-    console.log('msgId', msgId);
     const channel = await this.client.channels.fetch(data.channel_id);
     const messsage = await channel.messages.fetch(data.message_id);
 
@@ -100,24 +90,30 @@ export class BaicaoService {
       });
     }
 
-    const description = `Bài Cào - ${authorName}`;
     const amountStr =parsedExtraData[`baicao-${msgId}-amount-ip`] || '0';
-    const minLixiStr = parsedExtraData[`baicao-${msgId}-minBaicao-ip`] || '0';
     const numPlayerStr = parsedExtraData[`player-${msgId}-numPlayer`] || '0';
 
 
     const amountValue = parseInt(amountStr, 10);
-    const minLixiValue = parseInt(minLixiStr, 10);
     const numPlayerValue = parseInt(numPlayerStr, 10);
 
-    let result = Array(numPlayerValue).fill(minLixiValue);
-    let diff = amountValue - result.reduce((a, b) => a + b, 0);
-    while (diff >= 10000) {
-      const i = Math.floor(Math.random() * result.length);
-      result[i] += 10000;
-      diff -= 10000;
+    const messageContentRangePrice = `💵 Mệnh giá cược phải từ ${MIN_BET.toLocaleString()} đến ${MAX_BET.toLocaleString()}!`;
+    const messageContentLimitPerson = `👥 Số người chơi phải ít hơn ${MAX_PLAYERS}!`;
+
+    if (amountStr < MIN_BET || amountStr > MAX_BET) {
+      return await messsage?.reply({
+        t: messageContentRangePrice,
+        mk: [{ type: EMarkdownType.PRE, s: 0, e: messageContentRangePrice.length }],
+      });
+    }
+    if (numPlayerStr < 1 || numPlayerStr > MAX_PLAYERS) {
+      return await messsage?.reply({
+        t: messageContentLimitPerson,
+        mk: [{ type: EMarkdownType.PRE, s: 0, e: messageContentLimitPerson.length }],
+      });
     }
     const players = [{ user_id: authId, username: authorName }];
+
     const resultEmbed = {
       color: color,
       title: `[Bài Cào]`,
@@ -137,24 +133,21 @@ export class BaicaoService {
       ],
     };
 
-    const lixiDetail = {
+    const baicaoDetail = {
       amount: amountValue,
-      numLixi: numPlayerValue,
+      numPlayer: numPlayerValue,
     };
 
     const components = this.generateButtonComponents(
       {
         sender_id: authId,
         clan_id: clanId,
-        mode: mode,
-        is_public: isPublic,
         color: color,
         clan_nick: authorName,
         amount: amountValue,
-        numLixi: numPlayerValue,
-        minPerPerson: minLixiValue,
+        numPlayer: numPlayerValue,
       },
-      lixiDetail,
+      baicaoDetail,
     );
 
     try {
@@ -219,19 +212,17 @@ export class BaicaoService {
           channelId: data.channel_id,
         },
         {
-          content: `${amountValue}_${minLixiValue}_${numPlayerValue}`,
-          lixiResult: [
-            result,
-            amountValue,
-            [] as LixiDetail[],
-            description,
-            players,
-          ],
+          baicaoRoom: {
+            amount: amountValue,
+            maxPlayers: numPlayerValue,
+            players: [{ user_id: authId, username: authorName }],
+            started: false,
+          },
         },
       );
     } catch (error) {
       console.error('Error in handleSubmitCreate:', error);
-      const errorMessage = 'Có lỗi xảy ra khi tạo lixi. Vui lòng thử lại.';
+      const errorMessage = 'Có lỗi xảy ra khi tạo bài cào. Vui lòng thử lại.';
       return await messsage.update({
         t: errorMessage,
         mk: [
@@ -247,7 +238,7 @@ export class BaicaoService {
     return;
   }
 
-  async handleSelectLixi(data: any) {
+  async handleSelectBaicao(data: any) {
     try {
       const key = `${data.message_id}-${data.channel_id}`;
 
@@ -256,20 +247,9 @@ export class BaicaoService {
         typeButtonRes,
         authId,
         msgId,
-        mode,
-        isPublic,
         color,
-        authorName,
-        totalAmountStr,
-        numLixiStr,
         clanId,
-        minPerPersonStr,
       ] = data.button_id.split('_');
-
-      const isPublicBoolean = isPublic === 'true' ? true : false;
-      const amount = Number(totalAmountStr);
-      const numLixi = Number(numLixiStr);
-      const minPerPerson = minPerPersonStr ? Number(minPerPersonStr) : 10000;
 
       if (!data.user_id) return;
 
@@ -277,25 +257,20 @@ export class BaicaoService {
 
       if (!user) return;
 
-      const banStatus = await this.userCacheService.getUserBanStatus(
-        data.user_id,
-        FuncType.LIXI,
-      );
-
-      if (banStatus.isBanned) return;
-
-      const findMessageLixi = await this.mezonBotMessageRepository.findOne({
+      const message = await this.mezonBotMessageRepository.findOne({
         where: {
           messageId: data.message_id,
           channelId: data.channel_id,
           deleted: false,
         },
       });
-      if (!findMessageLixi) return;
+
+      const authorName = user.username;
+      if (!message) return;
 
       switch (typeButtonRes) {
         case EmbeddedButtonType.CANCEL:
-          await this.handleCancelLixi(data, findMessageLixi, authId);
+          await this.handleCancelBaicao(data, message, authId);
           break;
         case EmbeddedButtonType.SUBMITCREATE:
           await this.handleSubmitCreate(
@@ -303,62 +278,53 @@ export class BaicaoService {
             authId,
             msgId,
             clanId,
-            mode,
-            isPublic,
             color,
             authorName,
           );
           break;
         case EmbeddedButtonType.CHIABAI:
-          await this.handleLixi(
+          await this.handleBaicao(
             data,
             key,
-            findMessageLixi,
+            message,
             authId,
-            numLixi,
-            amount,
-            minPerPerson,
-            clanId,
-            mode,
-            isPublicBoolean,
-            color,
-            authorName,
-            user,
+            authorName as string,
+            message.baicaoRoom,
           );
           break;
         default:
           break;
       }
     } catch (error) {
-      console.error('Error in handleSelectLixi:', error);
+      console.error('Error in handleSelectBaicao:', error);
     }
   }
 
-  private async handleCancelLixi(
+  private async handleCancelBaicao(
     data: any,
-    findMessageLixi: any,
+    findMessage: any,
     authId: string,
   ) {
     if (data.user_id !== authId) return;
 
     const key = `${data.message_id}-${data.channel_id}`;
-    const [_, lixiMoney] = findMessageLixi.lixiResult;
+    const amount = findMessage.baicaoRoom.amount;
 
-    this.lixiCanceled.set(key, true);
-    this.markLixiCompleted(key); // This will clean up all handlers
+    this.baicaoCanceled.set(key, true);
+    this.markBaicaoCompleted(key);
 
     try {
       const channel = await this.client.channels.fetch(data.channel_id);
       const messsage = await channel.messages.fetch(data.message_id);
 
-      const textCancel = 'Cancel bai cao successful!';
+      const textCancel = 'Cancel chơi bài cào thành công ❤️';
       const msgCancel = {
         t: textCancel,
         mk: [{ type: EMarkdownType.PRE, s: 0, e: textCancel.length }],
       };
 
       await this.mezonBotMessageRepository.update(
-        { id: findMessageLixi.id },
+        { id: findMessage.id },
         { deleted: true },
       );
 
@@ -366,401 +332,114 @@ export class BaicaoService {
 
       const refundResult = await this.userCacheService.updateUserBalance(
         authId,
-        Number(lixiMoney),
+        Number(amount),
         0,
         10,
       );
 
       if (!refundResult.success) {
-        console.error('Failed to refund lixi money:', refundResult.error);
+        console.error('Failed to refund baicao money:', refundResult.error);
       }
 
-      this.cleanupLixi(key);
+      this.cleanupBaicao(key);
     } catch (error) {
-      console.error('Error cancelling lixi:', error);
+      console.error('Error cancelling baicao:', error);
     }
   }
 
-  private async handleLixi(
+  private async handleBaicao(
     data: any,
     key: string,
-    findMessageLixi: any,
+    message: any,
     authId: string,
-    numLixi: number,
-    amount: number,
-    minPerPerson: number,
-    clanId: string,
-    mode: string,
-    isPublic: boolean,
-    color: string,
     authorName: string,
-    user: any,
+    room: any,
   ) {
     if (data.user_id === authId) return;
-    if (this.lixiCanceled.get(key)) return;
-    if (this.lixiCompleted.get(key)) return;
+    if (this.baicaoCanceled.get(key)) return;
+    if (this.baicaoCompleted.get(key)) return;
+    if (room.started) return;
+    if (room.players.length >= room.maxPlayers) return;
+    if (room.players.some(p => p.user_id === data.user_id)) return;
 
-    const [amounts, lixiMoney, details, description] =
-      findMessageLixi.lixiResult;
+    room.players.push({ user_id: data.user_id, username: authorName });
 
-    if (amounts.length === 0) return;
-    if (details.some((d) => d.user_id === data.user_id)) return;
-
-    if (details.length >= numLixi) return;
-
-    // Check if user already clicked
-    const clickQueue = this.lixiClickQueue.get(key) || [];
-    if (clickQueue.some((u) => u.user_id === data.user_id)) return;
-
-    if (!this.lixiClickQueue.has(key)) {
-      this.lixiClickQueue.set(key, []);
+    if (room.players.length === room.maxPlayers) {
+      room.started = true;
+      // TODO: Xử lý chia bài
     }
 
-    this.lixiClickQueue.get(key)!.push({
-      user_id: data.user_id,
-      username: data.username || user.username,
-      timestamp: Date.now(),
-    });
+    await this.mezonBotMessageRepository.update(
+      { id: message.id },
+      { baicaoRoom: room },
+    );
 
-    // Start processing timeout if not already started
-    if (!this.lixiProcessingTimeouts.has(key)) {
-      const processingTimeout = setTimeout(() => {
-        this.processLixiQueue(
-          key,
-          data,
-          numLixi,
-          amount,
-          authId,
-          clanId,
-          mode,
-          isPublic,
-          color,
-          authorName,
-          minPerPerson,
-          description,
-        );
-      }, 500); // 1 second delay
-
-      this.lixiProcessingTimeouts.set(key, processingTimeout);
-    }
+    await this.updateBaicaoMessage(data, room);
   }
 
-  private async processLixiQueue(
-    key: string,
-    originalData: any,
-    numLixi: number,
-    amount: number,
-    authId: string,
-    clanId: string,
-    mode: string,
-    isPublic: boolean,
-    color: string,
-    authorName: string,
-    minPerPerson: number,
-    description: string,
-  ) {
-    if (this.lixiCanceled.get(key) || this.lixiCompleted.get(key)) {
-      return;
-    }
+  private async updateBaicaoMessage(data: any, room: any) {
+    const channel = await this.client.channels.fetch(data.channel_id);
+    if (!channel) return;
+    const message = await channel.messages.fetch(data.message_id);
+    if (!message) return;
 
-    // Prevent concurrent processing for the same key
-    if (this.lixiProcessing.get(key)) {
-      return;
-    }
+    const embed = {
+      color: '#FF69B4',
+      title: `[Bài Cào]`,
+      fields: [
+        { name: 'Tiền cược:', value: `${room.amount.toLocaleString()}đ` },
+        { name: 'Số người chơi:', value: `${room.players.length}/${room.maxPlayers}` },
+        { name: 'Người tham gia:', value: room.players.map(p => p.username).join(', ') },
+      ],
+    };
 
-    // Set processing flag
-    this.lixiProcessing.set(key, true);
+    const amount = room.amount;
+    const numPlayer = room.maxPlayers;
 
-    try {
-      // Clear timeout since we're processing now
-      this.lixiProcessingTimeouts.delete(key);
+    const baicaoDetail = {
+      amount: amount,
+      numPlayer: numPlayer,
+    };
 
-      const clickQueue = this.lixiClickQueue.get(key) || [];
-      if (clickQueue.length === 0) {
-        return;
-      }
+    const components = this.generateButtonComponents(
+      {
+        sender_id: data.user_id,
+        clan_id: data.clan_id,
+        mode: 'mode',
+        is_public: true,
+        color: data.color,
+        clan_nick: data.clan_nick || data.username,
+        amount,
+        numPlayer,
+      },
+      baicaoDetail,
+    );
 
-      // Get latest data from database
-      const latestMessageData = await this.mezonBotMessageRepository.findOne({
-        where: {
-          messageId: originalData.message_id,
-          channelId: originalData.channel_id,
-        },
-      });
-
-      if (!latestMessageData || !latestMessageData.lixiResult) {
-        return;
-      }
-
-      const [latestAmounts, lixiMoney, latestDetails] =
-        latestMessageData.lixiResult;
-
-      if (latestDetails.length >= numLixi || latestAmounts.length === 0) {
-        this.markLixiCompleted(key);
-        return;
-      }
-
-      const eligibleUsers = clickQueue.filter(
-        (u) => !latestDetails.some((d) => d.user_id === u.user_id),
-      );
-
-      if (eligibleUsers.length === 0) {
-        return;
-      }
-
-      const remainingSlots = numLixi - latestDetails.length;
-      const maxEligibleUsers = Math.min(
-        eligibleUsers.length,
-        latestAmounts.length,
-        remainingSlots,
-      );
-
-      if (maxEligibleUsers <= 0) {
-        this.markLixiCompleted(key);
-        return;
-      }
-
-      const selectedUsers = this.getRandomUsers(
-        eligibleUsers,
-        maxEligibleUsers,
-      );
-
-      if (!selectedUsers.length) {
-        return;
-      }
-
-      const userIds = selectedUsers
-        .map((u) => u.user_id)
-        .filter((id) => id !== undefined) as string[];
-      const userDataPromises = userIds.map((userId) =>
-        this.userCacheService.getUserFromCache(userId),
-      );
-
-      const userData = await Promise.all(userDataPromises);
-      const validUsers = userData.filter((user) => user !== null);
-
-      if (validUsers.length === 0) {
-        return;
-      }
-
-      let chosenLixiAmount = 0;
-      const newDetails = [...latestDetails];
-      const amountsToUpdate = [...latestAmounts];
-      const balanceUpdates: Array<{ userId: string; amount: number }> = [];
-
-      for (
-        let i = 0;
-        i < selectedUsers.length && amountsToUpdate.length > 0;
-        i++
-      ) {
-        const selectedUser = selectedUsers[i];
-        const user = validUsers.find((u) => u.user_id === selectedUser.user_id);
-
-        if (!user) continue;
-
-        const chosenAmount = amountsToUpdate.shift() || minPerPerson;
-
-        const lixiDetail: LixiDetail = {
-          user_id: selectedUser.user_id,
-          username: user.username as string,
-          amount: chosenAmount,
-        };
-
-        newDetails.push(lixiDetail);
-        chosenLixiAmount += chosenAmount;
-
-        if (selectedUser.user_id) {
-          balanceUpdates.push({
-            userId: selectedUser.user_id,
-            amount: chosenAmount,
-          });
-        }
-      }
-
-      if (newDetails.length > numLixi) {
-        newDetails.splice(numLixi);
-      }
-
-      // Update database first check
-      await this.mezonBotMessageRepository.update(
-        {
-          messageId: originalData.message_id,
-          channelId: originalData.channel_id,
-        },
-        {
-          lixiResult: [
-            amountsToUpdate,
-            lixiMoney - chosenLixiAmount,
-            newDetails,
-            description,
-          ],
-        },
-      );
-
-      const balancePromises = balanceUpdates.map(({ userId, amount }) =>
-        this.userCacheService.updateUserBalance(userId, amount, 0, 5),
-      );
-
-      await Promise.allSettled(balancePromises);
-
-      // Update UI
-      if (chosenLixiAmount > 0) {
-        await this.updateLixiMessage(
-          key,
-          originalData,
-          amount,
-          numLixi,
-          color,
-          description,
-        );
-      }
-
-      // Check if completed
-      if (amountsToUpdate.length === 0 || newDetails.length >= numLixi) {
-        this.markLixiCompleted(key);
-      } else {
-        // If not completed, and there are still users in queue who haven't been processed
-        const remainingEligibleUsers = clickQueue.filter(
-          (u) => !newDetails.some((d) => d.user_id === u.user_id),
-        );
-
-        if (remainingEligibleUsers.length > 0) {
-          // Start another timeout for remaining users
-          const nextProcessingTimeout = setTimeout(() => {
-            this.processLixiQueue(
-              key,
-              originalData,
-              numLixi,
-              amount,
-              authId,
-              clanId,
-              mode,
-              isPublic,
-              color,
-              authorName,
-              minPerPerson,
-              description,
-            );
-          }, 500);
-
-          this.lixiProcessingTimeouts.set(key, nextProcessingTimeout);
-        }
-      }
-    } catch (error) {
-      console.error(`[Lixi] Error processing queue for ${key}:`, error);
-    } finally {
-      // Always clear processing flag
-      this.lixiProcessing.delete(key);
-    }
+    await message.update({ embed: [embed], components });
   }
 
-  private async updateLixiMessage(
-    key: string,
-    originalData: any,
-    amount: number,
-    numLixi: number,
-    color: string,
-    description: string,
-  ) {
-    try {
-      const channel = await this.client.channels.fetch(originalData.channel_id);
-      if (!channel) return;
-
-      const message = await channel.messages.fetch(originalData.message_id);
-      if (!message) return;
-
-      // Get the most up-to-date data from database
-      const updatedMessageData = await this.mezonBotMessageRepository.findOne({
-        where: {
-          messageId: originalData.message_id,
-          channelId: originalData.channel_id,
-        },
-      });
-
-      if (!updatedMessageData || !updatedMessageData.lixiResult) return;
-
-      const [updatedAmounts, __, latestReceivers] =
-        updatedMessageData.lixiResult;
-
-      const receivers = latestReceivers;
-      const receiverList = receivers
-        .map((d) => `- ${d.username}: ${d.amount.toLocaleString()}đ`)
-        .join('\n');
-
-      const resultEmbed = {
-        color: color,
-        title: `[Lì xì] ${description || ''}`,
-        description: `Tổng: ${amount.toLocaleString()}đ
-            Số lượng lì xì: ${receivers.length}/${numLixi}
-            Người nhận: 
-            ${receiverList}
-            `,
-      };
-
-      if (updatedAmounts.length === 0 || receivers.length >= numLixi) {
-        await message.update({ embed: [resultEmbed] });
-      } else {
-        const lixiDetail = {
-          amount: amount,
-          numLixi: numLixi,
-        };
-
-        const components = this.generateButtonComponents(
-          {
-            sender_id: originalData.user_id,
-            clan_id: originalData.clan_id,
-            mode: 'mode',
-            is_public: true,
-            color: color,
-            clan_nick: 'authorName',
-            amount,
-            numLixi,
-            minPerPerson: 10000,
-          },
-          lixiDetail,
-        );
-
-        await message.update({ embed: [resultEmbed], components });
-      }
-    } catch (error) {
-      console.error(`[Lixi] Error updating message for ${key}:`, error);
-    }
-  }
-
-  private markLixiCompleted(key: string) {
-    this.lixiCompleted.set(key, true);
-    const processingTimeout = this.lixiProcessingTimeouts.get(key);
+  private markBaicaoCompleted(key: string) {
+    this.baicaoCompleted.set(key, true);
+    const processingTimeout = this.baicaoProcessingTimeouts.get(key);
     if (processingTimeout) {
       clearTimeout(processingTimeout);
-      this.lixiProcessingTimeouts.delete(key);
+      this.baicaoProcessingTimeouts.delete(key);
     }
 
-    this.lixiClickQueue.delete(key);
-    this.lixiProcessing.delete(key);
+    this.baicaoClickQueue.delete(key);
+    this.baicaoProcessing.delete(key);
   }
 
-  private cleanupLixi(key: string) {
-    this.lixiCanceled.delete(key);
-    this.lixiClickQueue.delete(key);
-    this.lixiCompleted.delete(key);
-    this.lixiProcessing.delete(key);
+  private cleanupBaicao(key: string) {
+    this.baicaoCanceled.delete(key);
+    this.baicaoClickQueue.delete(key);
+    this.baicaoCompleted.delete(key);
+    this.baicaoProcessing.delete(key);
 
-    const processingTimeout = this.lixiProcessingTimeouts.get(key);
+    const processingTimeout = this.baicaoProcessingTimeouts.get(key);
     if (processingTimeout) {
       clearTimeout(processingTimeout);
-      this.lixiProcessingTimeouts.delete(key);
+      this.baicaoProcessingTimeouts.delete(key);
     }
-  }
-
-  private getRandomUsers(users: any[], count: number): any[] {
-    if (users.length <= count) return users;
-
-    const result = [...users];
-    for (let i = result.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [result[i], result[j]] = [result[j], result[i]];
-    }
-
-    return result.slice(0, count);
   }
 }

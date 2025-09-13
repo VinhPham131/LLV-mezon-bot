@@ -16,7 +16,7 @@ export class ListenerMessageButtonClicked {
       const buttonConfirmType = args[0];
       switch (buttonConfirmType) {
         case 'baicao':
-          this.handleSelectLixi(data);
+          this.handleSelectBaicao(data);
           break;
         default:
           break;
@@ -26,9 +26,9 @@ export class ListenerMessageButtonClicked {
     }
   }
 
-  async handleSelectLixi(data) {
+  async handleSelectBaicao(data) {
     try {
-      await this.baicaoService.handleSelectLixi(data);
+      await this.baicaoService.handleSelectBaicao(data);
     } catch (error) {
       console.log('ERORR handleSelectPoll', error);
     }

@@ -6,10 +6,17 @@ export interface PollResult {
   emoji: string;
 }
 
-export interface LixiDetail {
+export interface BaicaoPlayer {
   user_id?: string;
   username: string;
+  card?: string[];
+}
+
+export interface BaicaoRoom {
   amount: number;
+  maxPlayers: number;
+  players: BaicaoPlayer[];
+  started: boolean;
 }
 
 @Index(['messageId', 'channelId', 'userId'])
@@ -45,6 +52,6 @@ export class MezonBotMessage {
   @Column('text', { array: true, nullable: true, default: null })
   roleResult: string[];
 
-  @Column({ type: 'jsonb', nullable: true, default: () => "'[]'" })
-  lixiResult: [number[], number, LixiDetail[], string];
+  @Column({ type: 'jsonb', nullable: true, default: () => "'{}'" })
+  baicaoRoom: BaicaoRoom;
 }

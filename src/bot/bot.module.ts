@@ -8,7 +8,6 @@ import { ListenerChannelMessage } from './listeners/onChannelMessage.listener';
 import { HelpsCommand } from 'src/bot/commands/helps/helps.command';
 import { RutCommand } from './commands/casino/rut.command';
 import { User } from './models/user.entity';
-import { BlockRut } from './models/blockrut.entity';
 import { UserCacheService } from './services/user-cache.service';
 import { RedisCacheService } from './services/redis-cache.service';
 import { ExtendersService } from './services/extenders.services';
@@ -23,7 +22,7 @@ import { ListenerMessageButtonClicked } from './listeners/onMessageButtonClicked
 @Module({
   imports: [
     DiscoveryModule,
-    TypeOrmModule.forFeature([User, BlockRut, MezonBotMessage]),
+    TypeOrmModule.forFeature([User, MezonBotMessage]),
   ],
   providers: [
     BotGateway,

@@ -8,9 +8,6 @@ import { MezonBotMessage } from 'src/bot/models/mezonBotMeassage.entity';
 import { Repository } from 'typeorm';
 import { User } from 'src/bot/models/user.entity';
 import { UserCacheService } from 'src/bot/services/user-cache.service';
-const MIN_BET = 1000;
-const MAX_BET = 50000;
-const MAX_PLAYERS = 20;
 
 @Command('baicao')
 export class BaicaoCommand extends CommandMessage {
@@ -29,27 +26,8 @@ export class BaicaoCommand extends CommandMessage {
     const messageChannel = await this.getChannelMessage(message);
     const messageid = message.message_id;
 
-      let betAmount = Number(args[0]) || MIN_BET;
-    let numPlayers = Number(args[1]) || 1;
-    const messageContentRangePrice = `💵 Mệnh giá cược phải từ ${MIN_BET.toLocaleString()} đến ${MAX_BET.toLocaleString()}!`;
-    const messageContentLimitPerson = `👥 Số người chơi phải ít hơn ${MAX_PLAYERS}!`;
-
-    if (betAmount < MIN_BET || betAmount > MAX_BET) {
-      return await messageChannel?.reply({
-        t: messageContentRangePrice,
-        mk: [{ type: EMarkdownType.PRE, s: 0, e: messageContentRangePrice.length }],
-      });
-    }
-    if (numPlayers < 1 || numPlayers > MAX_PLAYERS) {
-      return await messageChannel?.reply({
-        t: messageContentLimitPerson,
-        mk: [{ type: EMarkdownType.PRE, s: 0, e: messageContentLimitPerson.length }],
-      });
-    }
-
     const embed: any = [
       {
-        color: '#FF69B4',
         title: `[Bài Cào]`,
         fields: [
           {
@@ -122,7 +100,6 @@ export class BaicaoCommand extends CommandMessage {
       modeMessage: message.mode,
       channelId: message.channel_id,
       createAt: Date.now(),
-      lixiResult: [[], 0, []],
     };
     await this.mezonBotMessageRepository.insert(dataMezonBotMessage);
     return;

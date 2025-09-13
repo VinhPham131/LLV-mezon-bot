@@ -7,7 +7,6 @@ import { TABLE } from '../constants/tables';
   'last_message_id',
   'last_bot_message_id',
   'deactive',
-  'botPing',
 ])
 @Entity(TABLE.USER)
 export class User {
@@ -38,26 +37,11 @@ export class User {
   @Column({ type: 'text', nullable: true })
   last_mentioned_message_id: string;
 
-  @Column({ default: 0 })
-  scores_quiz: number;
-
-  @Column('text', { array: true, nullable: true })
-  roles: string[];
-
   @Column({ type: 'text', nullable: true })
   last_bot_message_id: string;
 
   @Column({ nullable: true, default: false })
   deactive: boolean;
-
-  @Column({ default: false })
-  botPing: boolean;
-
-  @Column({ default: true })
-  buzzDaily: boolean;
-
-  @Column({ default: true })
-  buzzNcc8: boolean;
 
   @Column({ type: 'numeric', nullable: true })
   createdAt: number;
@@ -81,16 +65,6 @@ export class User {
       roleMax?: string;
     };
   };
-  @Column({ type: 'jsonb', nullable: true, default: {} })
-  whitelist: {
-    [clanId: string]: string[];
-  };
-
-  @Column({ type: 'jsonb', nullable: true, default: {} })
-  invitor: {
-    [clanId: string]: string;
-  };
-
   @Column({ type: 'jsonb', nullable: true, default: [] })
   ban: {
     type: string;
