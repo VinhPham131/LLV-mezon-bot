@@ -526,12 +526,12 @@ export class BaicaoService {
       });
 
       // Trả thưởng cho người thắng
-      await this.userCacheService.updateUserBalance(
-        winner.user_id,
-        room.amount * room.players.length,
-        0,
-        10,
-      );
+      // await this.userCacheService.updateUserBalance(
+      //   winner.user_id,
+      //   room.amount * room.players.length,
+      //   0,
+      //   10,
+      // );
     }
 
     await this.mezonBotMessageRepository.update(
