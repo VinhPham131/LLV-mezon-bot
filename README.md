@@ -1,14 +1,14 @@
-# Mezon Bot Example - NestJS
+# Mezon LLV Baicao Bot - NestJS
 
-This repository contains an example of a Mezon bot built using NestJS.
+This repository contains how to deploy a Mezon LLV Baicao Bot built using NestJS.
 
 ## Overview
 
-This project demonstrates how to create a chatbot using NestJS as the backend framework for the Mezon bot. It provides a starting point for developers looking to build their own conversational applications.
+This project demonstrates how to create a LLV Baicao Bot using NestJS as the backend framework for the Mezon bot. It provides a starting point for developers looking to build their own conversational applications.
 
 ## Getting Started
 
-### Creating a Mezon Bot
+### Creating a LLV Baicao Bot
 
 1. Visit the [Mezon Developer Portal](https://mezon.ai/developers/applications)
 2. Sign in with your Mezon account or create one
@@ -33,10 +33,10 @@ Once you have your bot credentials, you can use them to connect your NestJS appl
 
 ```bash
 # Clone the repository
-git clone https://github.com/mezonai/mezon-bot-example-nestjs.git
+git clone https://github.com/VinhPham131/LLV-mezon-bot
 
 # Navigate to the project directory
-cd mezon-bot-example-nestjs
+cd LLV-mezon-bot
 
 # Install dependencies
 npm install
@@ -48,12 +48,14 @@ Create a `.env` file in the root directory and add the following configuration:
 
 ```
 # Bot configuration
-MEZON_TOKEN=your_bot_token_here
-BOT_ID=your_bot_id_here
-
-# Other environment variables
-PORT=3000
-```
+MEZON_TOKEN=
+BOT_ID=
+POSTGRES_HOST=
+POSTGRES_PORT=
+POSTGRES_USER=
+POSTGRES_PASSWORD=
+POSTGRES_DB=
+REDIS_URL=
 
 ## Running the Application
 
@@ -64,6 +66,16 @@ npm run start:dev
 # Production mode
 npm run start:prod
 ```
+## Steps to deploy on replit.com
+steps 1: Create account on replit
+steps 2: click import code from , and choose github , add your repo.
+steps 3: add secret in success
+steps 4: click deploy
+
+## Steps to create postgresql in cloud with console.neon
+steps 1: Create account on console.neon
+steps 2: choose create postgreSQL 
+steps 3: click connect and get the command psql to connect -> import to secret
 
 ## Project Structure
 
