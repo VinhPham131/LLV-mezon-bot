@@ -17,12 +17,12 @@ export class LuatChoiCommand extends CommandMessage {
       💰 Mệnh Giá Đặt Cược
       - Tối thiểu: \`1,000\`  
       - Tối đa: \`50,000\`  
-      - Số người chơi tối đa trong 1 bàn: \`20\`
+      - Số người chơi tối đa trong 1 bàn: \`17\`
       🕹️ Cách Tham Gia
       - Nhập lệnh \`*baicao\`để bắt đầu.
       Host sẽ chọn:
       - Mệnh giá cược 💵
-      - Số lượng người chơi (≤ 20)
+      - Số lượng người chơi (≤ 17)
       -> Sau khi host bấm bắt đầu,hệ thống sẽ mở poll cho người chơi tham gia.  
       -> Nếu số lượng người tham gia đạt giới hạn, hệ thống sẽ tự động chia bài sau 5 giây. ⏳
       🃏 Cách Xét Bài & Thứ Tự Ưu Tiên Thắng
