@@ -310,6 +310,7 @@ export class BaicaoService {
 
     const key = `${data.message_id}-${data.channel_id}`;
     const amount = findMessage.baicaoRoom.amount;
+    const players = findMessage.baicaoRoom.players || [];
 
     this.baicaoCanceled.set(key, true);
     this.markBaicaoCompleted(key);
@@ -331,16 +332,18 @@ export class BaicaoService {
 
       await messsage.update(msgCancel);
 
-      const refundResult = await this.userCacheService.updateUserBalance(
-        authId,
-        Number(amount),
-        0,
-        10,
-      );
-
-      if (!refundResult.success) {
-        console.error('Failed to refund baicao money:', refundResult.error);
+      for (const player of players) {
+        const refundResult = await this.userCacheService.updateUserBalance(
+          player.user_id,
+          Number(amount),
+          0,
+          10,
+        );
+        if (!refundResult.success) {
+          console.error('Failed to refund baicao money:', refundResult.error);
+        }
       }
+
 
       this.cleanupBaicao(key);
     } catch (error) {
@@ -367,6 +370,19 @@ export class BaicaoService {
     const msg = await channel.messages.fetch(data.message_id);
 
     const findUser = await this.userCacheService.getUserFromCache(data.user_id);
+
+    const clickQueue = this.baicaoClickQueue.get(key) || [];
+    if (clickQueue.some((u) => u.user_id === data.user_id)) return;
+
+    if (!this.baicaoClickQueue.has(key)) {
+      this.baicaoClickQueue.set(key, []);
+    }
+
+    this.baicaoClickQueue.get(key)!.push({
+      user_id: data.user_id,
+      username: data.username,
+      timestamp: Date.now(),
+    });
         
     if (!findUser) {
       const content = 'Người chơi không hợp lệ';
